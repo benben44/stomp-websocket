@@ -68,6 +68,42 @@ To continuously run tests on file changes:
 The project contains examples for using stomp.js
 to send and receive STOMP messages from a server directly in the Web Browser or in a WebWorker.
 
+# About IE8, IE9 use WebSocket
+
+IE8, IE9 not support native WebSocket, But you can use [web-socket-js](https://github.com/gimite/web-socket-js) to simulate native WebSocekt. web-socket-js is depend on Adobe Flash Player version >= 10.0.0, so your IE must have flash. 
+
+Next you should set up a simple Flash Socket Policy Server on your WebSocket server 843 port, you can see the detail on [A PolyFill for WebSockets](http://old.briangonzalez.org/posts/websockets-polyfill)
+
+otherwise you will see a error in browser console
+```
+make sure the server is running and Flash socket policy file is correctly placed
+```
+
+Flash socket policy file is very simple, you can see below.
+
+```
+<cross-domain-policy>
+  <allow-access-from domain="*" to-ports="*" />
+</cross-domain-policy>
+```
+
+Last But not least, Stomp in IE8 and IE9 have bug, the RegExp not normal。
+
+`datas.split(RegExp('' + Byte.NULL + Byte.LF + '*'))` in chrome will return `['some message', '']`, but in IE8 or IE9, it well return `['some message']`, the emptye string is missing. as a result the connect_success_callback function will not be callback, so a add a '' to the  frames. Problem solved! it working, but l can't promise everything will be ok in the feature.
+
+```
+ Frame.unmarshall = function (datas) {
+      var frame, frames, last_frame, r
+      frames = datas.split(RegExp('' + Byte.NULL + Byte.LF + '*'))
+
+      // fix ie8, ie9, RegExp not normal problem
+      // in chrome the frames length will be 2, but in ie8, ie9, it well be 1
+      // by wdd 20180321
+      if (frames.length === 1) {
+        frames.push('')
+      }
+```
+
 ## Authors
 
  * [Jeff Mesnil](http://jmesnil.net/)
